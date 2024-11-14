@@ -36,8 +36,6 @@ def match_timestamps(timestamps1: np.ndarray, timestamps2: np.ndarray) -> np.nda
         else:
             index_2 += 1
 
-    print(matching)
-
     return matching
 
 
