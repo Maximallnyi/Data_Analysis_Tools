@@ -1,7 +1,8 @@
 import time
 import numpy as np
+from numba import njit
 
-
+@njit(parallel = True)
 def match_timestamps(timestamps1: np.ndarray, timestamps2: np.ndarray) -> np.ndarray:
     """
     Timestamp matching function. It returns such array `matching` of length len(timestamps1),
@@ -15,28 +16,18 @@ def match_timestamps(timestamps1: np.ndarray, timestamps2: np.ndarray) -> np.nda
     """
     # Put your code here!
 
-    matching = []
+    matching = np.zeros(len(timestamps1))
+    length_t2 = len(timestamps2)
+    j = 0
 
-    index_1 = 0
-    index_2 = 0
-
-    while index_1 != len(timestamps1):
-        if (timestamps1[index_1] > timestamps2[index_2] and timestamps1[index_1] < timestamps2[index_2+1]):
-            if (timestamps1[index_1] - timestamps2[index_2] > timestamps2[index_2+1] - timestamps1[index_1]):
-                matching.append(index_2+1)
-                index_2 += 2
-            else: 
-                matching.append(index_2)
-                index_2 += 1
-            index_1 += 1
-        elif (timestamps1[index_1] <= timestamps2[index_2]):
-            matching.append(index_2)
-            index_2 += 1
-            index_1 += 1
-        else:
-            index_2 += 1
+    for i in range(len(timestamps1)):
+        while (j < length_t2 - 1 and 
+               abs(timestamps2[j] - timestamps1[i]) > abs(timestamps2[j + 1] - timestamps1[i])):
+            j += 1
+        matching[i] = j
 
     return matching
+
 
 
 def make_timestamps(fps: int, st_ts: float, fn_ts: float) -> np.ndarray:
@@ -109,8 +100,13 @@ def main():
     timestamps1 = make_timestamps(30, time.time() - 100, time.time() + 3600 * 2)
     # generate timestamps for the second camera
     timestamps2 = make_timestamps(60, time.time() + 200, time.time() + 3600 * 2.5)
-    matching = match_timestamps(timestamps1, timestamps2)
-
+    # initialize matching function
+    _ = match_timestamps(timestamps1[:2], timestamps2[:2])
+    start = time.time()
+    for i in range(100):
+        matching = match_timestamps(timestamps1, timestamps2)
+    end = time.time()
+    print(f'Total time = {(end-start)/100} ms')
 
 
 if __name__ == '__main__':
